@@ -1,25 +1,39 @@
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
+import { defineStore } from 'pinia' 
+import { useCookies } from "vue3-cookies";
+const { cookies } = useCookies();
 
 export const useAuth = defineStore('auth', () => {
-  const token = ref("")
-  const loggedIn = ref(false);
+  async function login(tokenString: string) {
+    const url = 'https://api.spacetraders.io/v2/my/agent';
+    const options = {
+      method: 'GET',
+      headers: {Accept: 'application/json', Authorization: `Bearer ${tokenString}`}
+    };
 
-  function login(tokenStrig: string) {
-    token.value = tokenStrig;
-    loggedIn.value = true;
+    const response = await fetch(url, options);
+    const data = await response.json();
+    if (data.error) {
+      console.error("Wrong token");
+    }
+    else {
+      cookies.set("token", tokenString);
+      window.location.reload()
+    }
   }
   function logout() {
-    token.value = "";
-    loggedIn.value = false;
+    cookies.remove("token");
+    window.location.reload()
+  }
+  function signup(userName: string) {
+    window.location.reload()
   }
   function authStatus() {
-    return loggedIn.value;
+    return cookies.isKey("token");
   }
   function getToken() {
-    if (loggedIn.value) return token.value;
+    if (cookies.isKey("token")) return cookies.get("token");
     throw "The user is not logged in";
   }
 
-  return { login, logout, authStatus, getToken }
+  return { login, logout, signup, authStatus, getToken }
 })
