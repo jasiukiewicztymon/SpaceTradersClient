@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { getStatus } from '@/stores/auth'
+import { useAuth } from '../stores/auth'
+
+var auth = useAuth();
 </script>
 
 <template>
-  <main>
-    <p>logged</p>
+  <main v-if="auth.authStatus()">
+    dsfdfs
+    <button @click="auth.logout()">logout</button>
   </main>
-  <main>
-    <p>login</p>
+  <main v-else>
+    dvvvvv
+    <button @click="auth.login('dgdsg')">login</button>
   </main>
 </template> 
