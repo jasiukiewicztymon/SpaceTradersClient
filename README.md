@@ -1,0 +1,2 @@
+# SpaceTradersClient
+Space traders client
