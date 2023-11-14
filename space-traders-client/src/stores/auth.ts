@@ -4,13 +4,14 @@ const { cookies } = useCookies();
 
 export const useAuth = defineStore('auth', () => {
   async function login(tokenString: string) {
-    const url = 'https://api.spacetraders.io/v2/my/agent';
-    const options = {
+    const response = await fetch('https://api.spacetraders.io/v2/my/agent', 
+    {
       method: 'GET',
-      headers: {Accept: 'application/json', Authorization: `Bearer ${tokenString}`}
-    };
-
-    const response = await fetch(url, options);
+      headers: {
+        Accept: 'application/json', 
+        Authorization: `Bearer ${tokenString}`
+      }
+    });
     const data = await response.json();
     if (data.error) {
       console.error("Wrong token");
@@ -24,8 +25,28 @@ export const useAuth = defineStore('auth', () => {
     cookies.remove("token");
     window.location.reload()
   }
-  function signup(userName: string) {
-    window.location.reload()
+  async function signup(userName: string) {
+    if (userName.length > 14 || userName.length < 3) window.alert("The name should have between 3-14 characters")
+    else {
+      const response = await fetch('https://api.spacetraders.io/v2/register', 
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json', 
+          Authorization: `Bearer 123`
+        },
+        body: {
+          // @ts-ignore
+          faction: "COSMIC",
+          symbol: "dd",
+          email: "a@a.com"
+        }
+      });
+
+      cookies.set("token", "test");
+      window.location.reload()
+    }
   }
   function authStatus() {
     return cookies.isKey("token");
