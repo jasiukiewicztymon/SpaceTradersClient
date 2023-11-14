@@ -3,3 +3,7 @@
 * {
   font-family: 'VT323', monospace;
 }
+*::selection {
+  background: #06ff06 !important;
+  color: #000800 !important;
+}

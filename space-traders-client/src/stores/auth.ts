@@ -14,7 +14,7 @@ export const useAuth = defineStore('auth', () => {
     });
     const data = await response.json();
     if (data.error) {
-      console.error("Wrong token");
+      window.alert("Wrong token");
     }
     else {
       cookies.set("token", tokenString);
@@ -33,23 +33,33 @@ export const useAuth = defineStore('auth', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'application/json', 
-          Authorization: `Bearer 123`
         },
-        body: {
-          // @ts-ignore
+        body: JSON.stringify({
           faction: "COSMIC",
-          symbol: "dd",
-          email: "a@a.com"
-        }
+          symbol: userName
+        })
       });
 
-      cookies.set("token", "test");
+      const data = await response.json();
+      console.log(data)
+
+      cookies.set("token", data.data.token);
       window.location.reload()
     }
   }
-  function authStatus() {
-    return cookies.isKey("token");
+  async function authStatus() {
+    if (!cookies.isKey("token")) return false;
+    const response = await fetch('https://api.spacetraders.io/v2/my/agent', 
+    {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json', 
+        Authorization: `Bearer ${cookies.get("token")}`
+      }
+    });
+    const data = await response.json();
+    if (data.error) return false;
+    return true;
   }
   function getToken() {
     if (cookies.isKey("token")) return cookies.get("token");
