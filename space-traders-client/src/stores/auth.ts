@@ -41,10 +41,12 @@ export const useAuth = defineStore('auth', () => {
       });
 
       const data = await response.json();
-      console.log(data)
-
-      cookies.set("token", data.data.token);
-      window.location.reload()
+      
+      if (data.error) window.alert("The name already exists")
+      else {
+        cookies.set("token", data.data.token);
+        window.location.reload()
+      }
     }
   }
   async function authStatus() {

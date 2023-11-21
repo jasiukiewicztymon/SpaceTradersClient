@@ -1,93 +1,124 @@
-<script setup lang="ts">
+<script lang="ts">
 import { ref, onMounted  } from "vue";
 import { useAuth } from '../stores/auth'
 import router from '../router/index'
+import { version } from '../../package.json'
+import { useCookies } from "vue3-cookies";
+const { cookies } = useCookies();
 
-var auth = useAuth();
-
-const username = ref("");
-const token = ref("");
-const h1Element = ref();
-const picklist = ref();
-
-auth.authStatus().then(r => {
-  if (r) router.push('/')
-})
-
+// sleep function
 function sleep(ms = 1000) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const factions: any[] = [];
+export default {
+  setup() {
+    // initialisation of the auth store
+    var auth = useAuth();
 
-(async () => {
-  let index = 1;
+    // initialisation of input variables
+    const username = ref("");
+    const token = ref("");
 
-  while (true) {
-    const response = await fetch(`https://api.spacetraders.io/v2/factions?limit=20&page=${index}`, 
-    {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      }
-    });
+    // initialisation of DOM references
+    const h1Element = ref();
+    const picklist = ref();
 
-    const data = await response.json();
+    // initialisation of the test entrypoint 
+    const testEntrypoint = ref();
+
+    // checking if connected and redirect if needed
+    auth.authStatus().then(r => {
+      if (r) router.push('/')
+    })
+
+    // faction list
+    const factions: any[] = [];
     
-    for (let d in data.data) {
-      factions.push({ symbol: data.data[d].symbol, name: data.data[d].name, description: data.data[d].description })
+    // true if factions are gotten
+    const factionsGot = ref();
+    const setFactionsGot = (v) => { factionsGot.value = v; }
+    
+    setFactionsGot(false);
+
+    // getting all factions from API
+    (async () => {
+      let index = 1;
+
+      while (true) {
+        const response = await fetch(`https://api.spacetraders.io/v2/factions?limit=20&page=${index}`, 
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          }
+        });
+
+        const data = await response.json();
+        
+        for (let d in data.data) {
+          factions.push({ symbol: data.data[d].symbol, name: data.data[d].name, description: data.data[d].description })
+        }
+
+        if (data.data.length < 20) break;
+      }
+    })()
+
+    return {
+      // test variables
+      cookies,
+      testEntrypoint,
+
+      // shared from setup
+      h1Element,
+      factions,
+      factionsGot,
+      setFactionsGot,
+      version,
+      auth,
+      username,
+      token
+    }
+  },
+  async mounted() {
+    // initialisation of the h1 to animate
+    let h1Element = this.h1Element;
+    let h1Children = Array.prototype.slice.call(h1Element.children).slice(0, -1);
+
+    // writing animation
+    for (let i = 0; i < h1Children.length; i++) {
+      h1Children[i].style.color = '#06ff06'
+      if (h1Children[i].innerText.length == 2) await sleep(1000) 
+      else await sleep(100)
     }
 
-    if (data.data.length < 20) break;
-  }
-})()
+    // blinking animation
+    h1Element.children[h1Element.children.length - 1].style.animationPlayState = 'running'
 
-onMounted(async () => {
-  let h1Children = Array.prototype.slice.call(h1Element.value.children).slice(0, -1);
-
-  for (let i = 0; i < h1Children.length; i++) {
-    h1Children[i].style.color = '#06ff06'
-    if (h1Children[i].innerText.length == 2) await sleep(1000) 
-    else await sleep(100)
-  }
-
-  h1Element.value.children[h1Element.value.children.length - 1].style.animationPlayState = 'running'
-})
+    this.setFactionsGot(true);
+  },
+}
 </script>
 
 <template>
-  <main>
+  <main ref="testEntrypoint">
     <h1 ref="h1Element">
-      <span>S</span>
-      <span>p</span>
-      <span>a</span>
-      <span>c</span>
-      <span>e</span>
-      <span>T</span>
-      <span>r</span>
-      <span>a</span>
-      <span>d</span>
-      <span>e</span>
-      <span>r</span>
-      <span>s </span>
-      <span>C</span>
-      <span>l</span>
-      <span>i</span>
-      <span>e</span>
-      <span>n</span>
-      <span>t </span>
+      <span v-for="c in ['S', 'p', 'a', 'c', 'e', 'T', 
+        'r', 'a', 'd', 'e', 'r', 's ', 'C', 'l', 'i', 'e', 'n', 't']"> 
+        {{c}}
+      </span>
       <br>
-      <span>v0.0.1 (alpha)</span>
+      <span>v{{ version.split('-')[0] }} {{ version.split('-')[1] == "" ? '' : `(${version.split('-')[1]})` }}</span>
     </h1>
     <div>
       <label>Sign up</label>
       <div>
         <div>
-          <input tabindex="1" type="text" placeholder="username" v-model="username">
+          <input tabindex="1" type="text" placeholder="username" v-model="username" @click="(e) => console.log(username)">
           <div @input="e => console.log(e)" tabindex="2" ref="picklist" id="picklist">
             <div>
               <div><b>Use up & down arrows</b></div>
-              <div v-for="faction in factions">
+              <div v-if="factionsGot" v-for="faction in factions">
                 {{ faction }}
               </div>
             </div>
